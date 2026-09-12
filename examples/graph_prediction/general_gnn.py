@@ -12,6 +12,7 @@ paper, and should work well for many different datasets without changes.
 Note: the results reported in the paper are averaged over 3 random repetitions
 with an 80/20 split.
 """
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.losses import CategoricalCrossentropy
@@ -36,6 +37,27 @@ epochs = 400
 ################################################################################
 # Load data
 ################################################################################
+# Workaround for scikit-learn >= 1.2 where OneHotEncoder removed the `sparse`
+# keyword in favor of `sparse_output`. Monkeypatch sklearn.preprocessing.OneHotEncoder
+# so spektral's TUDataset (which may pass `sparse=`) continues to work.
+try:
+    import sklearn.preprocessing as _skp
+
+    _OrigOneHotEncoder = _skp.OneHotEncoder
+
+    class OneHotEncoder(_OrigOneHotEncoder):
+        def __init__(self, *args, **kwargs):
+            if "sparse" in kwargs:
+                # Map old API name to new one
+                kwargs["sparse_output"] = kwargs.pop("sparse")
+            super().__init__(*args, **kwargs)
+
+    _skp.OneHotEncoder = OneHotEncoder
+except Exception:
+    # If sklearn isn't available or patching fails, continue and let the original
+    # error surface when attempting to load the dataset.
+    pass
+
 data = TUDataset("PROTEINS")
 
 # Train/test split

@@ -115,7 +115,25 @@ class Dataset:
             self.download()
 
         # Read graphs
-        self.graphs = self.read()
+        try:
+            self.graphs = self.read()
+        except Exception as e:
+            # Provide clearer error message for known sklearn.OneHotEncoder API change
+            msg = str(e)
+            if "OneHotEncoder" in msg and ("sparse" in msg or "'sparse'" in msg):
+                raise RuntimeError(
+                    "Failed to read the dataset due to a compatibility issue with "
+                    "sklearn.preprocessing.OneHotEncoder. Newer versions of scikit-learn "
+                    "removed the 'sparse' parameter in favor of 'sparse_output'. "
+                    "Either install a compatible scikit-learn version (<=1.1) or "
+                    "update the dataset preprocessing code to use 'sparse_output'. "
+                    f"Original error: {msg}"
+                ) from e
+            # Otherwise, re-raise with contextual message
+            raise RuntimeError(
+                f"An error occurred while reading the dataset: {msg}"
+            ) from e
+
         if self.a is None and self.__len__() > 0 and "a" not in self.graphs[0]:
             warnings.warn(
                 "The graphs in this dataset have no adjacency matrix. "
