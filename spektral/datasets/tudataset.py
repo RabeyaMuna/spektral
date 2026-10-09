@@ -58,8 +58,8 @@ class TUDataset(Dataset):
     def __init__(self, name, clean=False, **kwargs):
         if name not in self.available_datasets():
             raise ValueError(
-                "Unknown dataset {}. See {}.available_datasets() for a complete list of"
-                "available datasets.".format(name, self.__class__.__name__)
+                f"Unknown dataset {name}. See {self.__class__.__name__}.available_datasets() for a complete list of"
+                "available datasets."
             )
         self.name = name
         self.clean = clean
@@ -75,7 +75,7 @@ class TUDataset(Dataset):
                 self.name, " (clean)" if self.clean else ""
             )
         )
-        url = "{}/{}.zip".format(self.url_clean if self.clean else self.url, self.name)
+        url = f"{self.url_clean if self.clean else self.url}/{self.name}.zip"
         download_file(url, self.path, self.name + ".zip")
 
         # Datasets are zipped in a folder: unpack them
@@ -86,7 +86,7 @@ class TUDataset(Dataset):
         os.rmdir(subfolder)
 
     def read(self):
-        fname_template = osp.join(self.path, "{}_{{}}.txt".format(self.name))
+        fname_template = osp.join(self.path, f"{self.name}_{{}}.txt")
         available = [
             f.split(os.sep)[-1][len(self.name) + 1 : -4]  # Remove leading name
             for f in glob.glob(fname_template.format("*"))
@@ -187,10 +187,10 @@ class TUDataset(Dataset):
             labels = io.load_txt(fname_template.format("graph_labels"))
             labels = _normalize(labels[:, None], "ohe")
         else:
-            raise ValueError("No labels available for dataset {}".format(self.name))
+            raise ValueError(f"No labels available for dataset {self.name}")
 
         # Convert to Graph
-        print("Successfully loaded {}.".format(self.name))
+        print(f"Successfully loaded {self.name}.")
         return [
             Graph(x=x, a=a, e=e, y=y)
             for x, a, e, y in zip(x_list, a_list, e_list, labels)
@@ -207,7 +207,7 @@ class TUDataset(Dataset):
             return names
         except URLError:
             # No internet, don't panic
-            print("Could not read URL {}".format(url))
+            print(f"Could not read URL {url}")
             return []
 
 
@@ -216,7 +216,7 @@ def _normalize(x, norm=None):
     Apply one-hot encoding or z-score to a list of node features
     """
     if norm == "ohe":
-        fnorm = OneHotEncoder(sparse=False, categories="auto")
+        fnorm = OneHotEncoder(categories="auto")
     elif norm == "zscore":
         fnorm = StandardScaler()
     else:
