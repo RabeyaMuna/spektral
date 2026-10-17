@@ -36,7 +36,7 @@ epochs = 400
 ################################################################################
 # Load data
 ################################################################################
-data = TUDataset("PROTEINS")
+data = TUDataset("PROTEINS", use_node_attr=True, use_edge_attr=True)
 
 # Train/test split
 np.random.shuffle(data)
